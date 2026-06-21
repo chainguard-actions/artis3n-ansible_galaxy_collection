@@ -1,0 +1,32 @@
+---
+name: Test build-only mode (no publish)
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        with:
+          api_key: dummy-api-key-not-used-for-build-only
+          collection_dir: ./tests/fixtures/collection
+          build: "true"
+          publish: "false"
+
+      - name: Assert build artifact was created
+        run: |
+          echo "Checking for built collection artifact..."
+          # ansible-galaxy collection build places the artifact in the current working directory
+          ARTIFACT=$(find "$GITHUB_WORKSPACE" -maxdepth 2 -name "*.tar.gz" 2>/dev/null | head -1)
+          echo "artifact: $ARTIFACT"
+          if [ -z "$ARTIFACT" ]; then
+            echo "Listing workspace contents:"
+            ls -la "$GITHUB_WORKSPACE/" || true
+            ls -la "$GITHUB_WORKSPACE/tests/fixtures/collection/" || true
+            echo "FAIL: expected a .tar.gz build artifact"
+            exit 1
+          fi
+          echo "PASS: found artifact $ARTIFACT"

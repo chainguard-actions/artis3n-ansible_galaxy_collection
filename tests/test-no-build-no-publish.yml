@@ -1,0 +1,28 @@
+---
+name: Test no-build no-publish mode
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        with:
+          api_key: dummy-api-key-not-used
+          collection_dir: ./tests/fixtures/collection
+          build: "false"
+          publish: "false"
+
+      - name: Assert no artifact was created (build was skipped)
+        run: |
+          echo "Checking that no .tar.gz artifact was created (build=false)..."
+          ARTIFACT=$(find "$GITHUB_WORKSPACE" -maxdepth 2 -name "*.tar.gz" 2>/dev/null | head -1)
+          echo "artifact: $ARTIFACT"
+          if [ -n "$ARTIFACT" ]; then
+            echo "FAIL: expected no .tar.gz artifact when build=false, but found $ARTIFACT"
+            exit 1
+          fi
+          echo "PASS: no artifact created as expected"

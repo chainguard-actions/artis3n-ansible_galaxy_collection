@@ -1,0 +1,11 @@
+{
+  "owner": "artis3n",
+  "repo": "ansible_galaxy_collection",
+  "version": "v2.11.0",
+  "commit_sha": "f6110aef877db4caaa7e9a192975fb006dea61fe",
+  "url": "https://github.com/artis3n/ansible_galaxy_collection",
+  "policy_sha": "d636be7e43ef829af6e853da6b3c7566db9f72fe",
+  "test_policy_sha": "843adf9e4b8f85d0c08b27b9d0b09dd094b54702",
+  "test_agent_version": "1",
+  "harden_agent_version": "1"
+}
