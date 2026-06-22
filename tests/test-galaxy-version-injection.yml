@@ -1,0 +1,34 @@
+---
+name: Test galaxy_version injection
+on:
+  workflow_dispatch:
+jobs:
+  test-galaxy-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        with:
+          api_key: "dummy-api-key-not-used-for-build-only"
+          collection_dir: "./tests/fixtures/collection"
+          build: "true"
+          publish: "false"
+          galaxy_version: "2.3.4"
+
+      - name: Assert collection tarball was built with injected version
+        run: |
+          echo "Checking for built collection tarball with version 2.3.4..."
+          echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
+          echo "Files in workspace:"
+          ls -la "$GITHUB_WORKSPACE/" || true
+          TARBALL=$(find "$GITHUB_WORKSPACE" -name "testnamespace-testcollection-2.3.4.tar.gz" 2>/dev/null | head -1)
+          echo "Found tarball: $TARBALL"
+          if [ -z "$TARBALL" ]; then
+            echo "FAIL: Expected versioned tarball testnamespace-testcollection-2.3.4.tar.gz not found"
+            echo "All tarballs found:"
+            find "$GITHUB_WORKSPACE" -name "*.tar.gz" 2>/dev/null || true
+            exit 1
+          fi
+          echo "PASS: Collection tarball built with injected version 2.3.4: $TARBALL"

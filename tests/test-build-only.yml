@@ -1,0 +1,33 @@
+---
+name: Test build-only (no publish)
+on:
+  workflow_dispatch:
+jobs:
+  test-build-only:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        with:
+          api_key: "dummy-api-key-not-used-for-build-only"
+          collection_dir: "./tests/fixtures/collection"
+          build: "true"
+          publish: "false"
+
+      - name: Assert collection tarball was built
+        run: |
+          echo "Checking for built collection tarball..."
+          echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
+          echo "Files in workspace:"
+          ls -la "$GITHUB_WORKSPACE/" || true
+          TARBALL=$(find "$GITHUB_WORKSPACE" -name "testnamespace-testcollection-*.tar.gz" 2>/dev/null | head -1)
+          echo "Found tarball: $TARBALL"
+          if [ -z "$TARBALL" ]; then
+            echo "FAIL: Expected collection tarball not found"
+            echo "All tar.gz files:"
+            find "$GITHUB_WORKSPACE" -name "*.tar.gz" 2>/dev/null || true
+            exit 1
+          fi
+          echo "PASS: Collection tarball built successfully: $TARBALL"

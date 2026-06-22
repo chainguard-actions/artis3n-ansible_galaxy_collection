@@ -1,0 +1,13 @@
+.git
+.github
+.gitignore
+.idea
+.vscode
+.devcontainer
+.prettierrc.json
+.venv
+CHANGELOG.md
+fake_collection
+node_modules
+coverage
+dist
