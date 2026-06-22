@@ -1,0 +1,35 @@
+---
+name: Test galaxy version injection
+on:
+  workflow_dispatch:
+jobs:
+  test-galaxy-version-injection:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Copy fixture collection to workspace
+        run: |
+          cp -r "$GITHUB_WORKSPACE/tests/fixtures/collection" \
+            "$GITHUB_WORKSPACE/test-collection"
+
+      - id: action
+        uses: .
+        with:
+          api_key: "fake-api-key-for-build-only"
+          collection_dir: "./test-collection"
+          build: "true"
+          publish: "false"
+          galaxy_version: "2.5.0"
+
+      - name: Assert build artifact with injected version was created
+        run: |
+          echo "Checking for built collection artifact with version 2.5.0..."
+          ARTIFACT=$(find "$GITHUB_WORKSPACE" -name "*2.5.0*.tar.gz" 2>/dev/null | head -1)
+          if [ -z "$ARTIFACT" ]; then
+            echo "FAIL: No .tar.gz artifact with version 2.5.0 found after build"
+            # List all tar.gz files for debugging
+            find "$GITHUB_WORKSPACE" -name "*.tar.gz" 2>/dev/null || true
+            exit 1
+          fi
+          echo "PASS: Found versioned artifact: $ARTIFACT"

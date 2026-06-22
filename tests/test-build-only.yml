@@ -1,0 +1,32 @@
+---
+name: Test build only (no publish)
+on:
+  workflow_dispatch:
+jobs:
+  test-build-only:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Copy fixture collection to workspace
+        run: |
+          cp -r "$GITHUB_WORKSPACE/tests/fixtures/collection" \
+            "$GITHUB_WORKSPACE/test-collection"
+
+      - id: action
+        uses: .
+        with:
+          api_key: "fake-api-key-for-build-only"
+          collection_dir: "./test-collection"
+          build: "true"
+          publish: "false"
+
+      - name: Assert build artifact was created
+        run: |
+          echo "Checking for built collection artifact..."
+          ARTIFACT=$(find "$GITHUB_WORKSPACE" -name "*.tar.gz" 2>/dev/null | head -1)
+          if [ -z "$ARTIFACT" ]; then
+            echo "FAIL: No .tar.gz artifact found after build"
+            exit 1
+          fi
+          echo "PASS: Found artifact: $ARTIFACT"
