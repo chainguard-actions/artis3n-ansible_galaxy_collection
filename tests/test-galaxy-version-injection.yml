@@ -1,5 +1,5 @@
 ---
-name: Test galaxy_version injection with build-only
+name: Test galaxy_version injection
 on:
   workflow_dispatch:
 jobs:
@@ -8,26 +8,36 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
+      - name: Ensure fixture collection is present
+        run: |
+          ls -la "$GITHUB_WORKSPACE/tests/fixtures/fake_collection/"
+          cat "$GITHUB_WORKSPACE/tests/fixtures/fake_collection/galaxy.yml"
+
       - id: action
         uses: .
         with:
           api_key: dummy-api-key-not-used-for-build-only
-          collection_dir: ./tests/fixtures/collection
+          collection_dir: ./tests/fixtures/fake_collection/
           build: "true"
           publish: "false"
-          galaxy_version: "2.3.4"
+          galaxy_version: "3.2.1"
 
-      - name: Assert build artifact was created with injected version
+      - name: Assert build artifact with injected version was created
         run: |
-          echo "Checking for built collection artifact with version 2.3.4..."
-          # ansible-galaxy collection build places the artifact in the current working directory
-          ARTIFACT=$(find "$GITHUB_WORKSPACE" -maxdepth 2 -name "*2.3.4*.tar.gz" 2>/dev/null | head -1)
+          # ansible-galaxy collection build creates the artifact in the CWD ($GITHUB_WORKSPACE)
+          # The artifact is named <namespace>-<name>-<version>.tar.gz
+          echo "Listing workspace for artifacts:"
+          ls -la "$GITHUB_WORKSPACE"/*.tar.gz 2>/dev/null || true
+          ARTIFACT=$(find "$GITHUB_WORKSPACE" -maxdepth 1 -name "*.tar.gz" 2>/dev/null | head -1)
           echo "artifact: $ARTIFACT"
           if [ -z "$ARTIFACT" ]; then
-            echo "Listing all artifacts found:"
-            find "$GITHUB_WORKSPACE" -maxdepth 2 -name "*.tar.gz" 2>/dev/null || true
-            ls -la "$GITHUB_WORKSPACE/" || true
-            echo "FAIL: expected a .tar.gz artifact containing version 2.3.4"
+            echo "FAIL: expected a built .tar.gz artifact in $GITHUB_WORKSPACE but none was found"
             exit 1
           fi
-          echo "PASS: found versioned artifact $ARTIFACT"
+          # The artifact filename should contain the injected version 3.2.1
+          if echo "$ARTIFACT" | grep -q "3.2.1"; then
+            echo "PASS: artifact contains injected version 3.2.1"
+          else
+            echo "FAIL: artifact filename does not contain injected version 3.2.1: $ARTIFACT"
+            exit 1
+          fi

@@ -1,5 +1,5 @@
 ---
-name: Test build-only mode (no publish)
+name: Test build-only (no publish)
 on:
   workflow_dispatch:
 jobs:
@@ -8,25 +8,29 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
+      - name: Ensure fixture collection is present
+        run: |
+          ls -la "$GITHUB_WORKSPACE/tests/fixtures/fake_collection/"
+          cat "$GITHUB_WORKSPACE/tests/fixtures/fake_collection/galaxy.yml"
+
       - id: action
         uses: .
         with:
           api_key: dummy-api-key-not-used-for-build-only
-          collection_dir: ./tests/fixtures/collection
+          collection_dir: ./tests/fixtures/fake_collection/
           build: "true"
           publish: "false"
 
       - name: Assert build artifact was created
         run: |
-          echo "Checking for built collection artifact..."
-          # ansible-galaxy collection build places the artifact in the current working directory
-          ARTIFACT=$(find "$GITHUB_WORKSPACE" -maxdepth 2 -name "*.tar.gz" 2>/dev/null | head -1)
+          # ansible-galaxy collection build creates the artifact in the CWD ($GITHUB_WORKSPACE)
+          # The artifact is named <namespace>-<name>-<version>.tar.gz
+          echo "Listing workspace for artifacts:"
+          ls -la "$GITHUB_WORKSPACE"/*.tar.gz 2>/dev/null || true
+          ARTIFACT=$(find "$GITHUB_WORKSPACE" -maxdepth 1 -name "*.tar.gz" 2>/dev/null | head -1)
           echo "artifact: $ARTIFACT"
           if [ -z "$ARTIFACT" ]; then
-            echo "Listing workspace contents:"
-            ls -la "$GITHUB_WORKSPACE/" || true
-            ls -la "$GITHUB_WORKSPACE/tests/fixtures/collection/" || true
-            echo "FAIL: expected a .tar.gz build artifact"
+            echo "FAIL: expected a built .tar.gz artifact in $GITHUB_WORKSPACE but none was found"
             exit 1
           fi
-          echo "PASS: found artifact $ARTIFACT"
+          echo "PASS: artifact found at $ARTIFACT"

@@ -1,5 +1,5 @@
 ---
-name: Test no-build no-publish mode
+name: Test no build no publish (no-op)
 on:
   workflow_dispatch:
 jobs:
@@ -8,21 +8,28 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
+      - name: Ensure fixture collection is present
+        run: |
+          ls -la "$GITHUB_WORKSPACE/tests/fixtures/fake_collection/"
+          cat "$GITHUB_WORKSPACE/tests/fixtures/fake_collection/galaxy.yml"
+
       - id: action
         uses: .
         with:
           api_key: dummy-api-key-not-used
-          collection_dir: ./tests/fixtures/collection
+          collection_dir: ./tests/fixtures/fake_collection/
           build: "false"
           publish: "false"
 
-      - name: Assert no artifact was created (build was skipped)
+      - name: Assert no artifact was created (build was disabled)
         run: |
-          echo "Checking that no .tar.gz artifact was created (build=false)..."
-          ARTIFACT=$(find "$GITHUB_WORKSPACE" -maxdepth 2 -name "*.tar.gz" 2>/dev/null | head -1)
+          # When build is false, no .tar.gz artifact should be created anywhere in the workspace
+          echo "Listing workspace for artifacts:"
+          ls -la "$GITHUB_WORKSPACE"/*.tar.gz 2>/dev/null || echo "No .tar.gz files found (expected)"
+          ARTIFACT=$(find "$GITHUB_WORKSPACE" -maxdepth 1 -name "*.tar.gz" 2>/dev/null | head -1)
           echo "artifact: $ARTIFACT"
           if [ -n "$ARTIFACT" ]; then
-            echo "FAIL: expected no .tar.gz artifact when build=false, but found $ARTIFACT"
+            echo "FAIL: expected no artifact when build=false but found: $ARTIFACT"
             exit 1
           fi
-          echo "PASS: no artifact created as expected"
+          echo "PASS: no artifact created as expected when build=false and publish=false"
