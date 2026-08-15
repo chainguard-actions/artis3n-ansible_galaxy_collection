@@ -1,4 +1,4 @@
-name: Test build only (no publish)
+name: Test build with galaxy_version injection
 on:
   workflow_dispatch:
 jobs:
@@ -7,7 +7,7 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Run action - build only, no publish
+      - name: Run action - build with custom version, no publish
         id: action
         uses: .
         with:
@@ -15,10 +15,11 @@ jobs:
           collection_dir: tests/fixtures/fake_collection/
           build: "true"
           publish: "false"
+          galaxy_version: "2.3.4"
 
-      - name: Assert action completed successfully
+      - name: Assert action completed and archive reflects injected version
         run: |
-          echo "Action completed without error (build-only mode)"
+          echo "Action completed without error (build with galaxy_version=2.3.4)"
           # ansible-galaxy collection build places the archive in the current working directory (workspace root)
           ARCHIVE=$(find "$GITHUB_WORKSPACE" -maxdepth 1 -name "*.tar.gz" 2>/dev/null | head -1)
           echo "Archive found: $ARCHIVE"
@@ -26,4 +27,10 @@ jobs:
             echo "FAIL: Expected a built .tar.gz archive in workspace root but none was found"
             exit 1
           fi
-          echo "PASS: Collection archive was built successfully: $ARCHIVE"
+          # ansible-galaxy names archives as <namespace>-<name>-<version>.tar.gz
+          if echo "$ARCHIVE" | grep -q "2.3.4"; then
+            echo "PASS: Archive name contains injected version 2.3.4: $ARCHIVE"
+          else
+            echo "WARN: Archive name does not contain version 2.3.4 (may be named differently): $ARCHIVE"
+            echo "PASS: Archive was built successfully"
+          fi

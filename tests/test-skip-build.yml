@@ -1,0 +1,22 @@
+name: Test skip build and skip publish
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Run action - skip both build and publish
+        id: action
+        uses: .
+        with:
+          api_key: fake-api-key-not-used
+          collection_dir: tests/fixtures/fake_collection/
+          build: "false"
+          publish: "false"
+
+      - name: Assert action completed without error
+        run: |
+          echo "Action completed without error (build=false, publish=false)"
+          echo "PASS: Action ran successfully with build and publish both disabled"

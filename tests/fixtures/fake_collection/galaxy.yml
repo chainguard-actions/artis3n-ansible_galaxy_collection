@@ -1,0 +1,14 @@
+---
+
+namespace: testnamespace
+name: test_collection
+version: 1.0.0
+readme: README.md
+authors:
+  - Test Author <test@example.com>
+description: A test collection for CI testing.
+license_file: LICENSE
+tags: []
+repository: https://github.com/example/test_collection
+documentation: https://github.com/example/test_collection
+issues: https://github.com/example/test_collection/issues
