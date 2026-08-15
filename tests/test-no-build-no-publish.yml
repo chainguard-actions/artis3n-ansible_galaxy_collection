@@ -1,29 +1,27 @@
----
-name: Test no-build no-publish (skip both)
+name: Test no-build no-publish (validation only)
 on:
   workflow_dispatch:
 jobs:
-  test-no-build-no-publish:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - id: action
+      - name: Run action with build and publish both disabled
         uses: .
         with:
-          api_key: "dummy-api-key-not-used"
-          collection_dir: "./tests/fixtures/collection"
+          api_key: fake-api-key-not-used
+          collection_dir: tests/fixtures/fake_collection
           build: "false"
           publish: "false"
 
-      - name: Assert no tarball was built (build was disabled)
+      - name: Assert no collection archive was created
         run: |
-          echo "Verifying no tarball was built when build=false..."
-          echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
-          TARBALL=$(find "$GITHUB_WORKSPACE" -name "testnamespace-testcollection-*.tar.gz" 2>/dev/null | head -1)
-          echo "Tarball found: '${TARBALL}'"
-          if [ -n "$TARBALL" ]; then
-            echo "FAIL: Unexpected tarball found when build=false: $TARBALL"
+          echo "Verifying no archive was built (build=false, publish=false)..."
+          ARCHIVE=$(find . -name "testnamespace-test_collection-*.tar.gz" 2>/dev/null | head -1)
+          echo "Archive found: ${ARCHIVE:-none}"
+          if [ -n "$ARCHIVE" ]; then
+            echo "FAIL: did not expect a .tar.gz archive when build=false"
             exit 1
           fi
-          echo "PASS: No tarball built as expected when build=false and publish=false"
+          echo "PASS: no archive created as expected when build=false and publish=false"

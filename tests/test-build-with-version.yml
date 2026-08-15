@@ -1,0 +1,30 @@
+name: Test build with galaxy_version injection
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Run action with custom galaxy_version
+        uses: .
+        with:
+          api_key: fake-api-key-not-used-for-build
+          collection_dir: tests/fixtures/fake_collection
+          build: "true"
+          publish: "false"
+          galaxy_version: "2.5.1"
+
+      - name: Assert collection archive was built with injected version
+        run: |
+          echo "Checking for built collection archive with version 2.5.1..."
+          ARCHIVE=$(find . -name "testnamespace-test_collection-2.5.1.tar.gz" 2>/dev/null | head -1)
+          echo "Found archive: $ARCHIVE"
+          if [ -z "$ARCHIVE" ]; then
+            echo "FAIL: expected archive testnamespace-test_collection-2.5.1.tar.gz not found"
+            echo "All tar.gz files found:"
+            find . -name "*.tar.gz" 2>/dev/null || true
+            exit 1
+          fi
+          echo "PASS: collection archive with injected version found at $ARCHIVE"
